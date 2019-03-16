@@ -2,7 +2,11 @@ const express = require('express');
 const router = express.Router();
 const models = require("../models");
 const crypto = require('crypto'); // for password encryption
+const jwt = require('jsonwebtoken');
+const secretObj = require('../config/jwt');
 
+
+// 쿠키 사용용 코드
 router.get('/', function(req, res, next) {
   if(req.cookies.user){
     res.send('환영합니다~ '+req.cookies.user);
@@ -12,6 +16,7 @@ router.get('/', function(req, res, next) {
   }
 });
 
+// 세션 사용용 코드
 router.get('/login', function(req, res, next){
   let session = req.session;
 
@@ -31,9 +36,9 @@ router.post('/login', function(req, res, next){
     let inputPassword = body.password;
     let salt = result.dataValues.salt;
     // console.log( '[salt]', salt)
+
     crypto.pbkdf2(inputPassword, salt, 100000, 64, 'sha512', function (err, key) {
       let hashedPassword = key.toString('base64');
-
       if(dbPassword === hashedPassword){
         console.log('[login accessed]');
         // // set cookie
@@ -45,11 +50,27 @@ router.post('/login', function(req, res, next){
 
         // set session
         req.session.email = body.userEmail;
-        res.redirect('/users/login')
+        // res.redirect('/users/login');
+
+        // set JWT
+        // default: HMAC SHA256
+        let token = jwt.sign({
+          email: body.userEmail // 토큰 내용(payload)
+        },
+        secretObj.secret, // 비밀키
+        {
+          expiresIn: '5m' // 인증 유효시간
+        });
+
+        res.cookie("myjwt", token);
+        console.log('[JWT]', token);
+        // res.redirect('/users/login');
+        res.json({success:true});
       }
       else{
         console.log('[login access denied]');
-        res.redirect('/users/login');
+        // res.redirect('/users/login');
+        res.json({success:false});
       }
     });
 
@@ -83,9 +104,11 @@ router.post("/sign_up", function (req, res, next) {
         password: key.toString('base64'),
         salt: buf.toString('base64')
       }).then(result => {
-        res.redirect("/users/sign_up");
+        res.json({success:true});
+        // res.redirect("/users/sign_up");
       }).catch(err => {
         console.log(err)
+        res.json({success:false});
       })
     });
   });

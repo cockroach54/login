@@ -1,9 +1,11 @@
 var express = require('express');
 var router = express.Router();
 
-var mysql = require('mysql');
 const models = require('../models'); // 알아서 index.js 가져옴
+const jwt = require('jsonwebtoken');
+const secretObj = require('../config/jwt');
 
+// var mysql = require('mysql');
 // var client = mysql.createConnection({
 //   host: "127.0.0.1",
 //   user: "root",
@@ -25,6 +27,18 @@ router.get('/', function(req, res, next) {
     }
   });
  
+});
+
+router.get('/api', function(req, res, next){
+ let token = req.cookies.myjwt;
+ // jwt에 저장된 해시와 현재 head, payload 이용해 새로 해싱한 값이랑 같은지 검사 
+ let decoded = jwt.verify(token, secretObj.secret);
+ if(decoded){
+   res.send('[Claim accessed]');
+ }
+ else{
+   res.send('[Claim denied]');
+ }
 });
 
 router.get('/show', function(req, res, next) {

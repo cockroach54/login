@@ -4,7 +4,8 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var session = require('express-session');
 var logger = require('morgan');
-var methodOverride = require('method-override');
+var methodOverride = require('method-override'); // for put, delete method - 쿼리에 이렇게 추가 하는듯 ?_method=PUT
+var cors = require('cors');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -26,6 +27,8 @@ model.sequelize
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+// set CORS
+app.use(cors());
 
 app.use(methodOverride('_method')); // POST --> PUT, DELETE 등 restful method override
 app.use(logger('dev'));
